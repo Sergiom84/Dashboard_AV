@@ -74,8 +74,8 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
     weekly2026Row: 6, weekly2025Row: 9,
     locationsRowStart: null, locationsRowEnd: null,
     monthlyRowStart: 21, monthlyRowEnd: 32,
-    monthly2026Col: 24, // col X
-    monthly2025Col: 40, // col AN
+    monthly2026Col: 2,  // col B — datos reales 2026
+    monthly2025Col: 24, // col X — totales mensuales 2025
     monthly2024RowStart: null, monthly2024RowEnd: null, monthly2024Col: null,
   },
   Programados: {
@@ -84,9 +84,10 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
     weekly2026Row: 20, weekly2025Row: 23,
     locationsRowStart: 27, locationsRowEnd: 32,
     monthlyRowStart: 36, monthlyRowEnd: 47,
-    monthly2026Col: 17, // col Q
-    monthly2025Col: 33, // col AG
-    monthly2024RowStart: null, monthly2024RowEnd: null, monthly2024Col: null,
+    monthly2026Col: 2,  // col B — datos reales 2026
+    monthly2025Col: 17, // col Q — totales mensuales 2025
+    monthly2024RowStart: 50, monthly2024RowEnd: 61,
+    monthly2024Col: 17,
   },
   Presenciales: {
     sheetName: 'Presenciales',
@@ -94,9 +95,10 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
     weekly2026Row: 22, weekly2025Row: 25,
     locationsRowStart: 29, locationsRowEnd: 34,
     monthlyRowStart: 37, monthlyRowEnd: 48,
-    monthly2026Col: 16, // col P
-    monthly2025Col: 32, // col AF
-    monthly2024RowStart: null, monthly2024RowEnd: null, monthly2024Col: null,
+    monthly2026Col: 2,  // col B — datos reales 2026
+    monthly2025Col: 16, // col P — totales mensuales 2025
+    monthly2024RowStart: 51, monthly2024RowEnd: 62,
+    monthly2024Col: 16,
   },
   Incidencias: {
     sheetName: 'Incidencias',
@@ -104,9 +106,10 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
     weekly2026Row: 42, weekly2025Row: 45,
     locationsRowStart: 49, locationsRowEnd: 54,
     monthlyRowStart: 58, monthlyRowEnd: 69,
-    monthly2026Col: 16, // col P
-    monthly2025Col: 32, // col AF
-    monthly2024RowStart: null, monthly2024RowEnd: null, monthly2024Col: null,
+    monthly2026Col: 2,  // col B — datos reales 2026
+    monthly2025Col: 16, // col P — totales mensuales 2025
+    monthly2024RowStart: 72, monthly2024RowEnd: 83,
+    monthly2024Col: 16,
   },
   Correctivos: {
     sheetName: 'Correctivos',
@@ -114,9 +117,10 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
     weekly2026Row: 38, weekly2025Row: 41,
     locationsRowStart: 45, locationsRowEnd: 50,
     monthlyRowStart: 54, monthlyRowEnd: 65,
-    monthly2026Col: 16, // col P
-    monthly2025Col: 32, // col AF
-    monthly2024RowStart: null, monthly2024RowEnd: null, monthly2024Col: null,
+    monthly2026Col: 2,  // col B — datos reales 2026
+    monthly2025Col: 16, // col P — totales mensuales 2025
+    monthly2024RowStart: 69, monthly2024RowEnd: 80,
+    monthly2024Col: 16,
   },
 };
 
