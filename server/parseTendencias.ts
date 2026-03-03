@@ -54,6 +54,8 @@ interface SheetConfig {
   sheetName: string;
   categoriesRowStart: number;
   categoriesRowEnd: number;
+  categoriesGroupCol: number;
+  categoriesResolutionCol: number;
   weekly2026Row: number;
   weekly2025Row: number;
   locationsRowStart: number | null;
@@ -71,6 +73,7 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
   Remotos: {
     sheetName: 'Remotos',
     categoriesRowStart: 13, categoriesRowEnd: 17,
+    categoriesGroupCol: 1, categoriesResolutionCol: 1, // col A — nombre en columna A
     weekly2026Row: 6, weekly2025Row: 9,
     locationsRowStart: null, locationsRowEnd: null,
     monthlyRowStart: 21, monthlyRowEnd: 32,
@@ -81,6 +84,7 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
   Programados: {
     sheetName: 'Programados',
     categoriesRowStart: 5, categoriesRowEnd: 12,
+    categoriesGroupCol: 2, categoriesResolutionCol: 3, // col B + C
     weekly2026Row: 20, weekly2025Row: 23,
     locationsRowStart: 27, locationsRowEnd: 32,
     monthlyRowStart: 36, monthlyRowEnd: 47,
@@ -92,6 +96,7 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
   Presenciales: {
     sheetName: 'Presenciales',
     categoriesRowStart: 5, categoriesRowEnd: 14,
+    categoriesGroupCol: 2, categoriesResolutionCol: 3, // col B + C
     weekly2026Row: 22, weekly2025Row: 25,
     locationsRowStart: 29, locationsRowEnd: 34,
     monthlyRowStart: 37, monthlyRowEnd: 48,
@@ -103,6 +108,7 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
   Incidencias: {
     sheetName: 'Incidencias',
     categoriesRowStart: 5, categoriesRowEnd: 33,
+    categoriesGroupCol: 2, categoriesResolutionCol: 3, // col B + C
     weekly2026Row: 42, weekly2025Row: 45,
     locationsRowStart: 49, locationsRowEnd: 54,
     monthlyRowStart: 58, monthlyRowEnd: 69,
@@ -114,6 +120,7 @@ const SHEET_CONFIGS: Record<SupportType, SheetConfig> = {
   Correctivos: {
     sheetName: 'Correctivos',
     categoriesRowStart: 5, categoriesRowEnd: 30,
+    categoriesGroupCol: 2, categoriesResolutionCol: 3, // col B + C
     weekly2026Row: 38, weekly2025Row: 41,
     locationsRowStart: 45, locationsRowEnd: 50,
     monthlyRowStart: 54, monthlyRowEnd: 65,
@@ -215,8 +222,8 @@ function parseSheet(workbook: XLSX.WorkBook, type: SupportType): SheetData {
   // Categories
   const categories: CategoryData[] = [];
   for (let r = config.categoriesRowStart; r <= config.categoriesRowEnd; r++) {
-    const group = getCellString(sheet, r, 2);
-    const resolution = getCellString(sheet, r, 3);
+    const group = getCellString(sheet, r, config.categoriesGroupCol);
+    const resolution = getCellString(sheet, r, config.categoriesResolutionCol);
     if (!group && !resolution) continue;
     if (group === 'TOTAL' || resolution === 'TOTAL') continue;
     const weeklyVals = getRowValues(sheet, r, weekColStart, weekColEnd);
