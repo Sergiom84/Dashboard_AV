@@ -1,27 +1,50 @@
-import type { LocationChartPoint } from '@/lib/tendenciasAnalytics';
+import type { LocationChartPoint, TendenciasViewMode } from '@/lib/tendenciasAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MapPin } from 'lucide-react';
 
+const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
 interface LocationBreakdownProps {
   data: LocationChartPoint[];
+  viewMode: TendenciasViewMode;
   selectedWeek: number;
+  selectedMonth: number;
   selectedType: string;
 }
 
-export default function LocationBreakdown({ data, selectedWeek, selectedType }: LocationBreakdownProps) {
+export default function LocationBreakdown({
+  data,
+  viewMode,
+  selectedWeek,
+  selectedMonth,
+  selectedType,
+}: LocationBreakdownProps) {
+  const periodLabel =
+    viewMode === 'Semanal'
+      ? `S${selectedWeek}`
+      : viewMode === 'Mensual'
+        ? MESES_CORTOS[selectedMonth - 1]
+        : `Acum. hasta ${MESES_CORTOS[selectedMonth - 1]}`;
+  const emptyStateText =
+    viewMode === 'Semanal'
+      ? 'Sin datos de ubicación para esta semana'
+      : viewMode === 'Mensual'
+        ? 'Sin datos de ubicación para este mes'
+        : 'Sin datos de ubicación para el acumulado seleccionado';
+
   if (data.length === 0) {
     return (
       <Card className="chart-container">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin size={20} className="text-primary" />
-            Desglose por Ubicación — S{selectedWeek}
+            Desglose por Ubicación — {periodLabel}
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-2">
             {selectedType === 'Remotos'
               ? 'El soporte remoto no tiene desglose por ubicación'
-              : 'Sin datos de ubicación para esta semana'}
+              : emptyStateText}
           </p>
         </CardHeader>
       </Card>
@@ -33,7 +56,7 @@ export default function LocationBreakdown({ data, selectedWeek, selectedType }: 
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MapPin size={20} className="text-primary" />
-          Desglose por Ubicación — S{selectedWeek}
+          Desglose por Ubicación — {periodLabel}
         </CardTitle>
         <p className="text-sm text-muted-foreground mt-2">{selectedType}</p>
       </CardHeader>

@@ -7,6 +7,7 @@ import {
   getLocationBreakdown,
   getCategoryBreakdown,
   getMonthlyComparison,
+  getLatestMonthWith2026Data,
 } from '@/lib/tendenciasAnalytics';
 import MainNav from '@/components/MainNav';
 import KPICard from '@/components/KPICard';
@@ -23,19 +24,25 @@ export default function Tendencias() {
   const { data, loading, error, loadFromFile } = useTendenciasData();
   const [selectedType, setSelectedType] = useState<SupportType | 'Todos'>('Todos');
   const [selectedWeek, setSelectedWeek] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState(1);
   const [viewMode, setViewMode] = useState<'Semanal' | 'Mensual' | 'Anual'>('Semanal');
 
   useEffect(() => {
-    if (data) setSelectedWeek(data.latestWeek);
+    if (!data) {
+      return;
+    }
+
+    setSelectedWeek(data.latestWeek);
+    setSelectedMonth(getLatestMonthWith2026Data(data));
   }, [data]);
 
   const handleFileUpload = async (file: File) => loadFromFile(file);
 
   // Compute analytics when data available
-  const kpis = data ? calculateTendenciasKPIs(data, selectedType, selectedWeek) : [];
+  const kpis = data ? calculateTendenciasKPIs(data, selectedType, selectedWeek, selectedMonth, viewMode) : [];
   const weeklyEvolution = data ? getWeeklyEvolution(data, selectedType) : [];
-  const locationData = data ? getLocationBreakdown(data, selectedType, selectedWeek) : [];
-  const categoryData = data ? getCategoryBreakdown(data, selectedType, selectedWeek) : [];
+  const locationData = data ? getLocationBreakdown(data, selectedType, viewMode, selectedWeek, selectedMonth) : [];
+  const categoryData = data ? getCategoryBreakdown(data, selectedType, viewMode, selectedWeek, selectedMonth) : [];
   const monthlyData = data ? getMonthlyComparison(data, selectedType) : [];
   const hasMonthly2024Data = data?.hasMonthly2024Data || false;
   const cumulativeMonthlyData = monthlyData.map((m, idx) => {
@@ -65,11 +72,13 @@ export default function Tendencias() {
               <TendenciasFilters
                 selectedType={selectedType}
                 selectedWeek={selectedWeek}
+                selectedMonth={selectedMonth}
                 viewMode={viewMode}
                 latestWeek={data?.latestWeek || 1}
                 hasData={!!data}
                 onTypeChange={setSelectedType}
                 onWeekChange={setSelectedWeek}
+                onMonthChange={setSelectedMonth}
                 onViewModeChange={setViewMode}
                 onFileUpload={handleFileUpload}
                 isLoading={loading}
@@ -142,22 +151,6 @@ export default function Tendencias() {
                       />
                     </section>
 
-                    <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      <LocationBreakdown
-                        data={locationData}
-                        selectedWeek={selectedWeek}
-                        selectedType={selectedType}
-                      />
-                      <CategoryBreakdown
-                        data={categoryData}
-                        selectedWeek={selectedWeek}
-                        selectedType={selectedType}
-                      />
-                    </section>
-
-                    <section>
-                      <SpeechGenerator data={data} selectedWeek={selectedWeek} />
-                    </section>
                   </>
                 )}
 
@@ -264,6 +257,29 @@ export default function Tendencias() {
                         </div>
                       </CardContent>
                     </Card>
+                  </section>
+                )}
+
+                <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <LocationBreakdown
+                    data={locationData}
+                    viewMode={viewMode}
+                    selectedWeek={selectedWeek}
+                    selectedMonth={selectedMonth}
+                    selectedType={selectedType}
+                  />
+                  <CategoryBreakdown
+                    data={categoryData}
+                    viewMode={viewMode}
+                    selectedWeek={selectedWeek}
+                    selectedMonth={selectedMonth}
+                    selectedType={selectedType}
+                  />
+                </section>
+
+                {viewMode === 'Semanal' && (
+                  <section>
+                    <SpeechGenerator data={data} selectedWeek={selectedWeek} />
                   </section>
                 )}
               </>

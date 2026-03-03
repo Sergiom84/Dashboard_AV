@@ -6,8 +6,8 @@ interface MainNavProps {
 }
 
 const navItems = [
-  { path: '/', label: 'Dashboard AV', icon: BarChart3 },
-  { path: '/tendencias', label: 'Tendencias', icon: TrendingUp },
+  { path: '/', label: 'Tendencias', icon: TrendingUp },
+  { path: '/dashboard', label: 'Dashboard AV', icon: BarChart3 },
 ];
 
 export default function MainNav({ rightSlot }: MainNavProps) {

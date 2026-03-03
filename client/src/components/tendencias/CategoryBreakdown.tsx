@@ -1,26 +1,48 @@
-import type { CategoryChartPoint } from '@/lib/tendenciasAnalytics';
+import type { CategoryChartPoint, TendenciasViewMode } from '@/lib/tendenciasAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Layers } from 'lucide-react';
 
 const COLORS = ['#1e40af', '#3b82f6', '#ea580c', '#f97316', '#10b981', '#8b5cf6', '#f59e0b', '#6b7280', '#06b6d4', '#ec4899'];
+const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 interface CategoryBreakdownProps {
   data: CategoryChartPoint[];
+  viewMode: TendenciasViewMode;
   selectedWeek: number;
+  selectedMonth: number;
   selectedType: string;
 }
 
-export default function CategoryBreakdown({ data, selectedWeek, selectedType }: CategoryBreakdownProps) {
+export default function CategoryBreakdown({
+  data,
+  viewMode,
+  selectedWeek,
+  selectedMonth,
+  selectedType,
+}: CategoryBreakdownProps) {
+  const periodLabel =
+    viewMode === 'Semanal'
+      ? `S${selectedWeek}`
+      : viewMode === 'Mensual'
+        ? MESES_CORTOS[selectedMonth - 1]
+        : `Acum. hasta ${MESES_CORTOS[selectedMonth - 1]}`;
+  const emptyStateText =
+    viewMode === 'Semanal'
+      ? 'Sin datos de categorías para esta semana'
+      : viewMode === 'Mensual'
+        ? 'Sin datos de categorías para este mes'
+        : 'Sin datos de categorías para el acumulado seleccionado';
+
   if (data.length === 0) {
     return (
       <Card className="chart-container">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Layers size={20} className="text-primary" />
-            Categorías — S{selectedWeek}
+            Categorías — {periodLabel}
           </CardTitle>
-          <p className="text-sm text-muted-foreground mt-2">Sin datos de categorías para esta semana</p>
+          <p className="text-sm text-muted-foreground mt-2">{emptyStateText}</p>
         </CardHeader>
       </Card>
     );
@@ -31,7 +53,7 @@ export default function CategoryBreakdown({ data, selectedWeek, selectedType }: 
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Layers size={20} className="text-primary" />
-          Top Categorías — S{selectedWeek}
+          Top Categorías — {periodLabel}
         </CardTitle>
         <p className="text-sm text-muted-foreground mt-2">{selectedType}</p>
       </CardHeader>

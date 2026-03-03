@@ -10,8 +10,8 @@ import Tendencias from "./pages/Tendencias";
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/tendencias"} component={Tendencias} />
+      <Route path={"/"} component={Tendencias} />
+      <Route path={"/dashboard"} component={Home} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

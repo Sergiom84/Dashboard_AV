@@ -21,14 +21,23 @@ export interface MonthlyComparisonPoint {
   '2026': number;
 }
 
+export type TendenciasViewMode = 'Semanal' | 'Mensual' | 'Anual';
+
+const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
 // === KPIs ===
 
 export function calculateTendenciasKPIs(
   data: TendenciasData,
   selectedType: SupportType | 'Todos',
-  selectedWeek: number
+  selectedWeek: number,
+  selectedMonth: number,
+  viewMode: TendenciasViewMode
 ): KPI[] {
   const sheets = selectedType === 'Todos' ? SUPPORT_TYPES : [selectedType];
+  const referenceWeek = selectedWeek;
+  const referenceMonth = selectedMonth;
+  const referenceWeeks = getReferenceWeeks(viewMode, selectedWeek, selectedMonth, data.latestWeek);
 
   let total2026 = 0;
   let total2025 = 0;
@@ -37,23 +46,38 @@ export function calculateTendenciasKPIs(
 
   for (const type of sheets) {
     const sheet = data.sheets[type];
-    const wp = sheet.weeklyTotals[selectedWeek - 1];
-    if (wp) {
-      total2026 += wp.value2026;
-      total2025 += wp.value2025;
+
+    if (viewMode === 'Semanal') {
+      const wp = sheet.weeklyTotals[referenceWeek - 1];
+      if (wp) {
+        total2026 += wp.value2026;
+        total2025 += wp.value2025;
+      }
+    } else if (viewMode === 'Mensual') {
+      const mp = sheet.monthly[referenceMonth - 1];
+      if (mp) {
+        total2026 += mp.value2026;
+        total2025 += mp.value2025;
+      }
+    } else {
+      for (let i = 0; i < referenceMonth; i++) {
+        const mp = sheet.monthly[i];
+        if (mp) {
+          total2026 += mp.value2026;
+          total2025 += mp.value2025;
+        }
+      }
     }
 
-    // Top location for this week
     for (const loc of sheet.locations) {
-      const val = loc.weeklyValues[selectedWeek - 1] || 0;
+      const val = sumWeeks(loc.weeklyValues, referenceWeeks);
       if (val > topLocation.value) {
         topLocation = { name: loc.name, value: val };
       }
     }
 
-    // Top category for this week
     for (const cat of sheet.categories) {
-      const val = cat.weeklyValues[selectedWeek - 1] || 0;
+      const val = sumWeeks(cat.weeklyValues, referenceWeeks);
       if (val > topCategory.value) {
         topCategory = { name: cat.resolution || cat.group, value: val };
       }
@@ -62,17 +86,27 @@ export function calculateTendenciasKPIs(
 
   const diff = total2026 - total2025;
   const porcent = total2025 > 0 ? (diff / total2025) * 100 : 0;
+  const labels = getKpiLabels(viewMode, referenceWeek, referenceMonth);
+  const periodContext = getPeriodContext(viewMode, referenceWeek, referenceMonth);
+  const locationContext =
+    viewMode === 'Semanal' || topLocation.name === '-'
+      ? topLocation.name
+      : `${topLocation.name} · ${periodContext}`;
+  const categoryContext =
+    viewMode === 'Semanal' || topCategory.name === '-'
+      ? topCategory.name
+      : `${topCategory.name} · ${periodContext}`;
 
   return [
     {
-      label: 'Total Semana',
+      label: labels.totalLabel,
       value: total2026,
       change: porcent,
       trend: diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral',
-      subtitle: `Semana ${selectedWeek}`,
+      subtitle: labels.totalSubtitle,
     },
     {
-      label: 'vs 2025',
+      label: labels.compareLabel,
       value: total2025,
       change: porcent,
       trend: diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral',
@@ -83,16 +117,126 @@ export function calculateTendenciasKPIs(
       value: topLocation.value,
       change: 0,
       trend: 'neutral',
-      subtitle: topLocation.name,
+      subtitle: locationContext,
     },
     {
       label: 'Top Categoría',
       value: topCategory.value,
       change: 0,
       trend: 'neutral',
-      subtitle: topCategory.name,
+      subtitle: categoryContext,
     },
   ];
+}
+
+export function getLatestMonthWith2026Data(data: TendenciasData): number {
+  for (let monthIndex = 11; monthIndex >= 0; monthIndex--) {
+    const has2026Data = SUPPORT_TYPES.some((type) => {
+      const point = data.sheets[type].monthly[monthIndex];
+      return Boolean(point && point.value2026 > 0);
+    });
+
+    if (has2026Data) {
+      return monthIndex + 1;
+    }
+  }
+
+  for (let monthIndex = 11; monthIndex >= 0; monthIndex--) {
+    const hasAnyData = SUPPORT_TYPES.some((type) => {
+      const point = data.sheets[type].monthly[monthIndex];
+      return Boolean(point && (point.value2026 > 0 || point.value2025 > 0 || (point.value2024 ?? 0) > 0));
+    });
+
+    if (hasAnyData) {
+      return monthIndex + 1;
+    }
+  }
+
+  return 1;
+}
+
+function getKpiLabels(viewMode: TendenciasViewMode, referenceWeek: number, referenceMonth: number) {
+  if (viewMode === 'Mensual') {
+    return {
+      totalLabel: 'Total Mes',
+      totalSubtitle: MESES_CORTOS[referenceMonth - 1],
+      compareLabel: 'vs 2025',
+    };
+  }
+
+  if (viewMode === 'Anual') {
+    return {
+      totalLabel: 'Total Acum.',
+      totalSubtitle: `Hasta ${MESES_CORTOS[referenceMonth - 1]}`,
+      compareLabel: 'Acum. 2025',
+    };
+  }
+
+  return {
+    totalLabel: 'Total Semana',
+    totalSubtitle: `Semana ${referenceWeek}`,
+    compareLabel: 'vs 2025',
+  };
+}
+
+function getPeriodContext(viewMode: TendenciasViewMode, referenceWeek: number, referenceMonth: number): string {
+  if (viewMode === 'Mensual') {
+    return MESES_CORTOS[referenceMonth - 1];
+  }
+
+  if (viewMode === 'Anual') {
+    return `Acum. ${MESES_CORTOS[referenceMonth - 1]}`;
+  }
+
+  return `S${referenceWeek}`;
+}
+
+function getReferenceWeeks(
+  viewMode: TendenciasViewMode,
+  selectedWeek: number,
+  selectedMonth: number,
+  maxWeeks: number
+): number[] {
+  if (viewMode === 'Semanal') {
+    return [selectedWeek];
+  }
+
+  const weeks: number[] = [];
+
+  for (let week = 1; week <= maxWeeks; week++) {
+    const month = getMonthForWeek(week);
+    const shouldInclude = viewMode === 'Mensual' ? month === selectedMonth : month <= selectedMonth;
+
+    if (shouldInclude) {
+      weeks.push(week);
+    }
+  }
+
+  return weeks;
+}
+
+function sumWeeks(values: number[], weeks: number[]): number {
+  return weeks.reduce((sum, week) => sum + (values[week - 1] || 0), 0);
+}
+
+function getMonthForWeek(week: number): number {
+  const thursday = getIsoWeekThursday(2026, week);
+  return thursday.getUTCMonth() + 1;
+}
+
+function getIsoWeekThursday(year: number, week: number): Date {
+  const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+  const day = simple.getUTCDay();
+
+  if (day <= 4) {
+    simple.setUTCDate(simple.getUTCDate() - day + 1);
+  } else {
+    simple.setUTCDate(simple.getUTCDate() + 8 - day);
+  }
+
+  simple.setUTCDate(simple.getUTCDate() + 3);
+
+  return simple;
 }
 
 // === WEEKLY EVOLUTION ===
@@ -128,14 +272,17 @@ export function getWeeklyEvolution(
 export function getLocationBreakdown(
   data: TendenciasData,
   selectedType: SupportType | 'Todos',
-  week: number
+  viewMode: TendenciasViewMode,
+  selectedWeek: number,
+  selectedMonth: number
 ): LocationChartPoint[] {
   const sheets = selectedType === 'Todos' ? SUPPORT_TYPES : [selectedType];
   const locMap = new Map<string, number>();
+  const referenceWeeks = getReferenceWeeks(viewMode, selectedWeek, selectedMonth, data.latestWeek);
 
   for (const type of sheets) {
     for (const loc of data.sheets[type].locations) {
-      const val = loc.weeklyValues[week - 1] || 0;
+      const val = sumWeeks(loc.weeklyValues, referenceWeeks);
       locMap.set(loc.name, (locMap.get(loc.name) || 0) + val);
     }
   }
@@ -151,14 +298,17 @@ export function getLocationBreakdown(
 export function getCategoryBreakdown(
   data: TendenciasData,
   selectedType: SupportType | 'Todos',
-  week: number
+  viewMode: TendenciasViewMode,
+  selectedWeek: number,
+  selectedMonth: number
 ): CategoryChartPoint[] {
   const sheets = selectedType === 'Todos' ? SUPPORT_TYPES : [selectedType];
   const catMap = new Map<string, number>();
+  const referenceWeeks = getReferenceWeeks(viewMode, selectedWeek, selectedMonth, data.latestWeek);
 
   for (const type of sheets) {
     for (const cat of data.sheets[type].categories) {
-      const val = cat.weeklyValues[week - 1] || 0;
+      const val = sumWeeks(cat.weeklyValues, referenceWeeks);
       if (val > 0) {
         const key = cat.resolution || cat.group;
         catMap.set(key, (catMap.get(key) || 0) + val);
@@ -197,8 +347,7 @@ export function getMonthlyComparison(
         v2026 += mp.value2026;
       }
     }
-    const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    result.push({ mes: MESES[i], '2024': has2024Value ? v2024 : null, '2025': v2025, '2026': v2026 });
+    result.push({ mes: MESES_CORTOS[i], '2024': has2024Value ? v2024 : null, '2025': v2025, '2026': v2026 });
   }
 
   return result;

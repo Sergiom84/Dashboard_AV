@@ -25,7 +25,7 @@ import MainNav from '@/components/MainNav';
 export default function Home() {
   const { data: initialData, loading, error, refetch } = useExcelData();
   const [selectedYear, setSelectedYear] = useState<number | undefined>(2026);
-  const [selectedType, setSelectedType] = useState<string | undefined>('Remotos');
+  const [selectedType, setSelectedType] = useState<string | undefined>('Remoto');
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
   const dashboardRef = useRef<HTMLDivElement>(null);
