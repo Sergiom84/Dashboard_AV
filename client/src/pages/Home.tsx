@@ -103,18 +103,26 @@ export default function Home() {
 
   if (currentData.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800 max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
-              <AlertCircle size={20} />
-              Sin datos disponibles
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-yellow-600 dark:text-yellow-300">Por favor, carga un archivo Excel para comenzar.</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <MainNav />
+        <div className="min-h-[80vh] flex items-center justify-center">
+          <div className="w-full max-w-md space-y-4 px-4">
+            <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+                  <AlertCircle size={20} />
+                  Sin datos disponibles
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-yellow-600 dark:text-yellow-300">
+                  Carga el archivo Excel para visualizar el dashboard.
+                </p>
+              </CardContent>
+            </Card>
+            <DataUploader onDataLoaded={refetch} />
+          </div>
+        </div>
       </div>
     );
   }
