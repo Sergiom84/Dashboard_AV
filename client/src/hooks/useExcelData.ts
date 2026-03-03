@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import * as XLSX from 'xlsx';
+import { useEffect, useState, useCallback } from 'react';
 
 export interface SoporteData {
   fecha: string;
@@ -21,48 +20,28 @@ export function useExcelData() {
   const [data, setData] = useState<ProcessedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refetch = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
       try {
-        const response = await fetch('/data.xlsx');
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const worksheet = workbook.Sheets['Datos_PBI'];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        // Procesar datos
-        const processedData: SoporteData[] = jsonData
-          .map((row: any) => ({
-            fecha: row.Fecha,
-            año: row.Año,
-            mes: row.Mes,
-            mesNum: row.Mes_Num,
-            tipo: row.Tipo,
-            soportes: row.Soportes || 0,
-          }))
-          .filter((item) => item.soportes > 0); // Filtrar datos vacíos
-
-        // Extraer valores únicos
-        const tipos = Array.from(new Set(processedData.map((d) => d.tipo))).sort();
-        const años = Array.from(new Set(processedData.map((d) => d.año))).sort();
-        const meses = Array.from(new Set(processedData.map((d) => d.mes)));
-
-        setData({
-          data: processedData,
-          tipos,
-          años,
-          meses,
-        });
-        setLoading(false);
+        const response = await fetch('/api/soportes');
+        if (!response.ok) throw new Error('Error al obtener datos del servidor');
+        const result: ProcessedData = await response.json();
+        setData(result.data.length > 0 ? result : null);
+        setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error loading data');
+      } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [refreshKey]);
 
-  return { data, loading, error };
+  return { data, loading, error, refetch };
 }

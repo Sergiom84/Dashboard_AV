@@ -1,12 +1,10 @@
 import { useRef, useState } from 'react';
-import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
-import { SoporteData } from '@/hooks/useExcelData';
 
 interface DataUploaderProps {
-  onDataLoaded: (data: SoporteData[]) => void;
+  onDataLoaded: () => void;
 }
 
 export default function DataUploader({ onDataLoaded }: DataUploaderProps) {
@@ -22,35 +20,24 @@ export default function DataUploader({ onDataLoaded }: DataUploaderProps) {
     setMessage(null);
 
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-      const worksheet = workbook.Sheets['Datos_PBI'];
+      const formData = new FormData();
+      formData.append('file', file);
 
-      if (!worksheet) {
-        throw new Error('No se encontró la hoja "Datos_PBI" en el archivo');
+      const res = await fetch('/api/soportes/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const body = await res.json();
+
+      if (!res.ok) {
+        throw new Error(body.error || 'Error al procesar el archivo');
       }
 
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      const processedData: SoporteData[] = jsonData
-        .map((row: any) => ({
-          fecha: row.Fecha,
-          año: row.Año,
-          mes: row.Mes,
-          mesNum: row.Mes_Num,
-          tipo: row.Tipo,
-          soportes: row.Soportes || 0,
-        }))
-        .filter((item) => item.soportes > 0);
-
-      if (processedData.length === 0) {
-        throw new Error('No se encontraron datos válidos en el archivo');
-      }
-
-      onDataLoaded(processedData);
+      onDataLoaded();
       setMessage({
         type: 'success',
-        text: `Se cargaron ${processedData.length} registros correctamente`,
+        text: `Se cargaron ${body.count} registros correctamente`,
       });
     } catch (error) {
       setMessage({

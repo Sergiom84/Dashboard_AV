@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { useExcelData, SoporteData } from '@/hooks/useExcelData';
+import { useExcelData } from '@/hooks/useExcelData';
 import {
   calculateKPIs,
   calculateTrends,
@@ -23,16 +23,15 @@ import { AlertCircle, TrendingUp, AlertTriangle, FileDown, Loader2 } from 'lucid
 import MainNav from '@/components/MainNav';
 
 export default function Home() {
-  const { data: initialData, loading, error } = useExcelData();
-  const [dynamicData, setDynamicData] = useState<SoporteData[] | null>(null);
+  const { data: initialData, loading, error, refetch } = useExcelData();
   const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
   const [selectedType, setSelectedType] = useState<string | undefined>(undefined);
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  const currentData = dynamicData || initialData?.data || [];
-  const isInitialLoading = loading && !dynamicData;
+  const currentData = initialData?.data || [];
+  const isInitialLoading = loading;
 
   const tipos = Array.from(new Set(currentData.map((d) => d.tipo))).sort();
   const años = Array.from(new Set(currentData.map((d) => d.año))).sort();
@@ -84,7 +83,7 @@ export default function Home() {
     );
   }
 
-  if (error && !dynamicData) {
+  if (error && currentData.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 max-w-md">
@@ -160,7 +159,7 @@ export default function Home() {
           {/* Sidebar */}
           <div className="w-full lg:w-80 flex-shrink-0 print:hidden">
             <div className="sticky top-24 flex flex-col gap-4">
-              <DataUploader onDataLoaded={setDynamicData} />
+              <DataUploader onDataLoaded={refetch} />
               <FilterSidebar
                 data={{
                   data: currentData,
