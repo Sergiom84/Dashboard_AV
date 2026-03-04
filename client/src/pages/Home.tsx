@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useExcelData } from '@/hooks/useExcelData';
 import {
   calculateKPIs,
@@ -28,7 +28,7 @@ export default function Home() {
   const [selectedType, setSelectedType] = useState<string | undefined>('Remoto');
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
-  const dashboardRef = useRef<HTMLDivElement>(null);
+  const [printInfo, setPrintInfo] = useState<{ filters: string[]; date: string } | null>(null);
 
   const currentData = initialData?.data || [];
   const isInitialLoading = loading;
@@ -37,7 +37,6 @@ export default function Home() {
   const años = Array.from(new Set(currentData.map((d) => d.año))).sort();
 
   const handleExportPDF = useCallback(() => {
-    // Build a summary of active filters
     const filters: string[] = [];
     if (selectedYear) filters.push(`Año: ${selectedYear}`);
     if (selectedType) filters.push(`Tipo: ${selectedType}`);
@@ -47,30 +46,24 @@ export default function Home() {
       filters.push(`Comparando meses: ${selectedMonths.map(m => meses[m-1]).join(', ')}`);
     }
 
-    // Add a temporary print header with filter info
-    const printHeader = document.createElement('div');
-    printHeader.id = 'print-header';
-    printHeader.innerHTML = `
-      <div style="padding: 20px 0; border-bottom: 2px solid #1e40af; margin-bottom: 20px;">
-        <h1 style="font-size: 24px; font-weight: bold; color: #1e40af; margin: 0;">Dashboard de Soporte - Informe</h1>
-        <p style="color: #6b7280; margin: 4px 0 0 0;">Generado el ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-        ${filters.length > 0 ? `<p style="color: #374151; margin: 8px 0 0 0; font-size: 14px;"><strong>Filtros aplicados:</strong> ${filters.join(' | ')}</p>` : ''}
-      </div>
-    `;
-
-    const dashboard = dashboardRef.current;
-    if (dashboard) {
-      dashboard.prepend(printHeader);
-    }
-
-    window.print();
-
-    // Remove the temp header after print dialog closes
-    setTimeout(() => {
-      const el = document.getElementById('print-header');
-      if (el) el.remove();
-    }, 500);
+    setPrintInfo({
+      filters,
+      date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }),
+    });
   }, [selectedYear, selectedType, selectedYears, selectedMonths]);
+
+  useEffect(() => {
+    if (!printInfo) return;
+    window.print();
+    const afterPrint = () => setPrintInfo(null);
+    window.addEventListener('afterprint', afterPrint, { once: true });
+    // Fallback in case afterprint doesn't fire
+    const timer = setTimeout(() => setPrintInfo(null), 2000);
+    return () => {
+      window.removeEventListener('afterprint', afterPrint);
+      clearTimeout(timer);
+    };
+  }, [printInfo]);
 
   if (isInitialLoading) {
     return (
@@ -162,7 +155,19 @@ export default function Home() {
       />
 
       {/* Main Content */}
-      <main className="container py-8" ref={dashboardRef}>
+      <main className="container py-8">
+        {/* Print header — only visible when printing */}
+        {printInfo && (
+          <div className="hidden print:block pb-5 mb-5 border-b-2 border-blue-800">
+            <h1 className="text-2xl font-bold text-blue-800 m-0">Dashboard de Soporte - Informe</h1>
+            <p className="text-gray-500 mt-1">Generado el {printInfo.date}</p>
+            {printInfo.filters.length > 0 && (
+              <p className="text-gray-700 mt-2 text-sm">
+                <strong>Filtros aplicados:</strong> {printInfo.filters.join(' | ')}
+              </p>
+            )}
+          </div>
+        )}
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
           <div className="w-full lg:w-80 flex-shrink-0 print:hidden">
