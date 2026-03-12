@@ -389,7 +389,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border bg-card mt-12 print:hidden">
         <div className="container py-6 text-center text-sm text-muted-foreground">
-          <p>Dashboard de Soporte Técnico &copy; 2026 | Datos actualizados al {new Date().toLocaleDateString('es-ES')}</p>
+          <p>AV y SSCC &copy; 2026 | Datos actualizados al {new Date().toLocaleDateString('es-ES')}</p>
         </div>
       </footer>
     </div>

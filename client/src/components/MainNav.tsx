@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { BarChart3, TrendingUp } from 'lucide-react';
+import { BarChart3, RefreshCw, TrendingUp } from 'lucide-react';
 
 interface MainNavProps {
   rightSlot?: React.ReactNode;
@@ -8,6 +8,7 @@ interface MainNavProps {
 const navItems = [
   { path: '/', label: 'Tendencias', icon: TrendingUp },
   { path: '/dashboard', label: 'Dashboard AV', icon: BarChart3 },
+  { path: '/renove', label: 'Renove', icon: RefreshCw },
 ];
 
 export default function MainNav({ rightSlot }: MainNavProps) {
@@ -18,7 +19,7 @@ export default function MainNav({ rightSlot }: MainNavProps) {
       <div className="container py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <h1 className="text-lg font-bold text-foreground hidden sm:block">Soporte AV</h1>
+            <h1 className="text-lg font-bold text-foreground hidden sm:block">AV y SSCC</h1>
             <nav className="flex items-center gap-1">
               {navItems.map((item) => {
                 const isActive = location === item.path;

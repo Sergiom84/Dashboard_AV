@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { client } from './db.js';
+import { parseRenoveWorkbook } from './parseRenove.js';
 import { parseTendenciasWorkbook } from './parseTendencias.js';
 
 const router = Router();
@@ -121,6 +122,48 @@ router.post('/api/tendencias/upload', upload.single('file'), async (req, res) =>
     });
 
     res.json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error al procesar el archivo';
+    res.status(500).json({ error: message });
+  }
+});
+
+// ─── RENOVE ──────────────────────────────────────────────────
+
+router.get('/api/renove', async (_req, res) => {
+  try {
+    const result = await client.execute('SELECT data, uploaded_at FROM renove WHERE id = 1');
+
+    if (result.rows.length === 0) {
+      return res.json(null);
+    }
+
+    res.json({
+      ...JSON.parse(result.rows[0].data as string),
+      uploadedAt: result.rows[0].uploaded_at as string,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error al obtener renove';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.post('/api/renove/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se envió ningún archivo' });
+    }
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const data = parseRenoveWorkbook(workbook);
+
+    await client.execute({
+      sql: `INSERT INTO renove (id, data, uploaded_at) VALUES (1, ?, datetime('now'))
+            ON CONFLICT(id) DO UPDATE SET data = excluded.data, uploaded_at = excluded.uploaded_at`,
+      args: [JSON.stringify(data)],
+    });
+
+    res.json({ success: true, count: data.records.length });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error al procesar el archivo';
     res.status(500).json({ error: message });

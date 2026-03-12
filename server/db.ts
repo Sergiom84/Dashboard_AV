@@ -25,5 +25,11 @@ export async function initDb() {
       data TEXT NOT NULL,
       uploaded_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS renove (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      data TEXT NOT NULL,
+      uploaded_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
